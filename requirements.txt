@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pymupdf
+python-pptx
+# CPU-only torch
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.0+cpu
+numpy<2.0.0
+chonkie[semantic]
+sentence-transformers
+qdrant-client
+openai>=1.54.0
+pydantic
+pydantic-settings
+python-dotenv
+streamlit
+requests
