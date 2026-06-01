@@ -7,12 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import (
     IngestResponse, QuizRequest, Quiz,
     SubmitAnswers, ScoreResult, QuestionResult,
+    SummarizeRequest, QuizSummary,
 )
 from ingestion.parser  import parse_file
 from ingestion.chunker import chunk_text
 from ingestion.store   import store_chunks
 from retrieval.search  import search_chunks
-from generation.quiz   import generate_quiz
+from generation.quiz   import generate_quiz, generate_summary
 
 app = FastAPI(title="Quiz Generator", version="1.0")
 
@@ -42,9 +43,25 @@ async def ingest(file: UploadFile = File(...)):
         tmp_path = tmp.name
 
     try:
-        raw_text = parse_file(tmp_path, name)
-        chunks   = chunk_text(raw_text)
-        result   = store_chunks(chunks, name)
+        raw_text, page_map = parse_file(tmp_path, name)
+        
+        if not raw_text or len(raw_text.strip()) < 50:
+            raise HTTPException(400, "Document has insufficient text content. It might be scanned or image-based.")
+        
+        chunks = chunk_text(raw_text)
+        
+        if not chunks:
+            raise HTTPException(400, "Failed to create chunks from document")
+        
+        result = store_chunks(chunks, name, page_map)
+        
+        if result["chunk_count"] == 0:
+            raise HTTPException(400, "No content could be stored from document")
+        
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Internal error processing document: {str(e)}")
     finally:
         os.unlink(tmp_path)
 
@@ -60,7 +77,16 @@ def quiz(req: QuizRequest):
     chunks = search_chunks(req.topic, req.doc_id)
     if not chunks:
         raise HTTPException(404, "No content found for this document")
-    return generate_quiz(chunks, req.doc_id, req.topic, req.n)
+    
+    # Get filename from first chunk
+    filename = chunks[0].get("filename", "") if chunks else ""
+    quiz_result = generate_quiz(chunks, req.doc_id, req.topic, req.n)
+    
+    # Add filename to quiz
+    quiz_dict = quiz_result.model_dump()
+    quiz_dict["filename"] = filename
+    
+    return Quiz.model_validate(quiz_dict)
 
 
 @app.post("/score", response_model=ScoreResult)
@@ -80,6 +106,7 @@ def score(payload: SubmitAnswers):
             was_correct    = is_correct,
             explanation    = q.explanation,
             source_text    = q.source_text,
+            page_number    = q.page_number,
         ))
 
     total = len(payload.quiz.questions)
@@ -89,3 +116,13 @@ def score(payload: SubmitAnswers):
         score_percent = round(correct / total * 100, 1),
         breakdown     = breakdown,
     )
+
+
+
+@app.post("/summarize", response_model=QuizSummary)
+def summarize(req: SummarizeRequest):
+    """Generate detailed performance summary with study recommendations."""
+    chunks = search_chunks(req.quiz.topic, req.doc_id, top_k=10)
+    if not chunks:
+        raise HTTPException(404, "No content found for this document")
+    return generate_summary(chunks, req.quiz, req.result)

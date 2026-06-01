@@ -3,7 +3,8 @@ from clients import azure_client, qdrant_client
 from config  import settings
 
 
-def search_chunks(topic: str, doc_id: str, top_k: int = 6) -> list[str]:
+def search_chunks(topic: str, doc_id: str, top_k: int = 6) -> list[dict]:
+    """Search chunks and return with page numbers and filename."""
     response = azure_client.embeddings.create(
         input = [topic],
         model = settings.azure_openai_embed_model,
@@ -25,4 +26,12 @@ def search_chunks(topic: str, doc_id: str, top_k: int = 6) -> list[str]:
         with_payload    = True,
     )
 
-    return [r.payload["text"] for r in results]
+    return [
+        {
+            "text": r.payload["text"],
+            "page_num": r.payload.get("page_num", 0),
+            "doc_type": r.payload.get("doc_type", "PDF"),
+            "filename": r.payload.get("filename", ""),
+        }
+        for r in results
+    ]
