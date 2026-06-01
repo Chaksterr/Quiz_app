@@ -2,6 +2,42 @@
 
 Generate interactive quizzes from PDF and PowerPoint documents using AI and RAG (Retrieval Augmented Generation).
 
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+
+## ⚡ Installation (3 commandes)
+
+```bash
+# 1. Installer uv (une seule fois)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Cloner et installer
+git clone <your-repo-url>
+cd quiz-generator
+uv sync  # Installe tout automatiquement !
+
+# 3. Configurer
+cp .env.example .env
+# Éditer .env avec vos credentials Azure OpenAI
+```
+
+**C'est tout !** `uv sync` crée le venv et installe toutes les dépendances en quelques secondes.
+
+## 🚀 Démarrage
+
+```bash
+# Terminal 1 - Qdrant
+docker run -d -p 6333:6333 --name qdrant qdrant/qdrant:latest
+
+# Terminal 2 - Backend
+uv run uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+# Terminal 3 - Frontend
+uv run streamlit run frontend/app.py --server.port 8501
+```
+
+**Accès:** http://localhost:8501 🎉
+
 ## ✨ Features
 
 - 📄 **Document Support**: Upload PDF and PowerPoint files
@@ -36,64 +72,48 @@ Generate interactive quizzes from PDF and PowerPoint documents using AI and RAG 
 
 ## 🚀 Quick Start
 
-### Prerequisites
+> **Prérequis:** [uv](https://docs.astral.sh/uv/) (gestionnaire de paquets Python ultra-rapide)
 
-- Python 3.12+
-- Docker (for Qdrant)
-- Azure OpenAI API access
+Si `uv` n'est pas installé :
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh  # macOS/Linux
+# ou
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"  # Windows
+```
 
-### 1. Clone & Setup
+### Installation complète
+
+### Installation complète
 
 ```bash
 git clone <your-repo-url>
 cd quiz-generator
-python3 -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+uv sync  # Crée le venv + installe les dépendances
+cp .env.example .env  # Configurer vos credentials Azure
 ```
 
-### 2. Configure Environment
+### Lancement des services
+
+### Lancement des services
 
 ```bash
-cp .env.example .env
+# Qdrant (base de données vectorielle)
+docker run -d -p 6333:6333 --name qdrant qdrant/qdrant:latest
+
+# Backend (dans un terminal)
+uv run uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend (dans un autre terminal)
+uv run streamlit run frontend/app.py --server.port 8501
 ```
 
-Edit `.env` with your Azure OpenAI credentials:
+### Accès
 
-```env
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_API_KEY=your_api_key_here
-AZURE_OPENAI_API_VERSION=2025-04-01-preview
-AZURE_OPENAI_CHAT_MODEL=o4-mini
-AZURE_OPENAI_EMBED_MODEL=text-embedding-3-small
-```
-
-### 3. Start Services
-
-**Start Qdrant:**
-```bash
-docker run -d -p 6333:6333 -p 6334:6334 --name qdrant qdrant/qdrant:latest
-```
-
-**Start Backend:**
-```bash
-cd backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**Start Frontend (new terminal):**
-```bash
-source .venv/bin/activate
-cd frontend
-streamlit run app.py --server.port 8501
-```
-
-### 4. Access Application
+### Accès
 
 - **Frontend**: http://localhost:8501
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-- **Qdrant Dashboard**: http://localhost:6333/dashboard
+- **Backend API**: http://localhost:8000/docs
+- **Qdrant**: http://localhost:6333/dashboard
 
 ## 📖 Usage
 
@@ -155,6 +175,44 @@ streamlit run app.py --server.port 8501
 ├── requirements.txt        # Root dependencies
 └── README.md
 ```
+
+## 📦 Using uv Package Manager
+
+### Common Commands
+
+```bash
+# Install/sync dependencies
+uv sync
+
+# Add a new dependency
+uv add package-name
+
+# Add a development dependency
+uv add --dev package-name
+
+# Remove a dependency
+uv remove package-name
+
+# Run a command in the virtual environment
+uv run python script.py
+uv run uvicorn backend.main:app --reload
+
+# Update dependencies
+uv lock --upgrade
+
+# Show installed packages
+uv pip list
+```
+
+### Why uv?
+
+- ⚡ **10-100x faster** than pip
+- 🔒 **Deterministic** dependency resolution with `uv.lock`
+- 🎯 **Single tool** for venv, pip, and pip-tools
+- 📦 **Modern** pyproject.toml support
+- 🔄 **Compatible** with existing Python projects
+
+> **Important**: The `uv.lock` file is committed to git to ensure everyone installs the exact same dependency versions. When you clone the repo, just run `uv sync` and you're ready to go!
 
 ## 🔧 Configuration
 

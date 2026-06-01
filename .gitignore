@@ -13,6 +13,9 @@ build/
 venv/
 ENV/
 
+# uv
+.python-version.bak
+
 # Environment variables
 .env
 .env.local

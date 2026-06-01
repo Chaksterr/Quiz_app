@@ -6,8 +6,11 @@ PROMPT = """\
 You are a quiz generator. Use ONLY the context below.
 Generate exactly {n} multiple choice questions.
 
-Context (with page/slide references):
+Context:
 {context}
+
+IMPORTANT: Do NOT include page numbers in the questions themselves.
+Page numbers will be added automatically later.
 
 Return ONLY a JSON object with this structure:
 {{
@@ -15,12 +18,12 @@ Return ONLY a JSON object with this structure:
   "topic":  "{topic}",
   "questions": [
     {{
-      "question":       "...",
+      "question":       "What is the main concept?",
       "choices": [
-        {{"label": "A", "text": "..."}},
-        {{"label": "B", "text": "..."}},
-        {{"label": "C", "text": "..."}},
-        {{"label": "D", "text": "..."}}
+        {{"label": "A", "text": "First option"}},
+        {{"label": "B", "text": "Second option"}},
+        {{"label": "C", "text": "Third option"}},
+        {{"label": "D", "text": "Fourth option"}}
       ],
       "correct_answer": "A",
       "explanation":    "Why this answer is correct in one sentence.",
@@ -29,6 +32,8 @@ Return ONLY a JSON object with this structure:
     }}
   ]
 }}
+
+Note: The page_number field is for reference only and will be used in the answer explanations.
 """
 
 
@@ -38,11 +43,13 @@ def generate_quiz(
     topic:  str,
     n:      int = 5,
 ) -> Quiz:
-    # Build context with page numbers
+    # Build context WITHOUT page numbers in the main text
+    # Page numbers are tracked separately
     context_parts = []
     for chunk in chunks:
-        page_ref = f"[Page {chunk['page_num']}]" if chunk['doc_type'] == 'PDF' else f"[Slide {chunk['page_num']}]"
-        context_parts.append(f"{page_ref}\n{chunk['text']}")
+        # Don't include page reference in the context text
+        # This prevents AI from mentioning pages in questions
+        context_parts.append(chunk['text'])
     
     context = "\n\n---\n\n".join(context_parts)
     prompt  = PROMPT.format(

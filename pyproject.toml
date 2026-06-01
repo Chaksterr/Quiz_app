@@ -1,0 +1,42 @@
+[project]
+name = "ai-quiz-generator"
+version = "0.1.0"
+description = "Generate interactive quizzes from PDF and PowerPoint documents using AI and RAG"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.12",
+    "pymupdf>=1.24.0",
+    "python-pptx>=1.0.0",
+    "torch==2.2.0+cpu",
+    "numpy<2.0.0",
+    "chonkie[semantic]>=0.2.0",
+    "sentence-transformers>=3.0.0",
+    "qdrant-client>=1.11.0",
+    "openai>=1.54.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "python-dotenv>=1.0.0",
+    "streamlit>=1.39.0",
+    "requests>=2.32.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/ai-quiz-generator"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+index-url = "https://pypi.org/simple"
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+name = "pytorch-cpu"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
